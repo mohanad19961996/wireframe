@@ -1,73 +1,54 @@
-import React, { useState } from "react";
-import { Header } from "./components/Header";
-import { HeroSection } from "./components/HeroSection";
+import Navbar from "./components/Navbar";
+import ScrollProgress from "./components/ScrollProgress";
+import WireframeSection from "./components/WireframeSection";
+import HeroWireframe from "./components/HeroWireframe";
+import ProblemWireframe from "./components/ProblemWireframe";
+import FeaturesWireframe from "./components/FeaturesWireframe";
+import ServicesWireframe from "./components/ServicesWireframe";
+import TransformWireframe from "./components/TransformWireframe";
+import ContactWireframe from "./components/ContactWireframe";
+import { LanguageProvider } from "./components/LanguageContext";
 
-import { ProblemSection } from "./components/ProblemSection";
-import { StatisticsSection } from "./components/StatisticsSection";
-import { ServicesSection } from "./components/ServicesSection";
+function AppContent() {
+  return (
+    <div className="min-h-screen">
+      <ScrollProgress />
+      <Navbar />
+      
+      {/* Main content with padding-top to account for fixed navbar */}
+      <main className="pt-16">
+        <WireframeSection id="hero" variant="gradient" animation="scaleIn" animationDelay={200}>
+          <HeroWireframe />
+        </WireframeSection>
 
-import { PricingSection } from "./components/PricingSection";
-import { PortfolioSection } from "./components/PortfolioSection";
-import { ContactSection } from "./components/ContactSection";
-import { FooterSection } from "./components/FooterSection";
-import { ScrollButtons } from "./components/ScrollButtons";
+        <WireframeSection id="problem" backgroundColor="bg-background" animation="fadeInLeft" animationDelay={100}>
+          <ProblemWireframe />
+        </WireframeSection>
+
+        <WireframeSection id="features" variant="accent" animation="fadeInUp" animationDelay={150}>
+          <FeaturesWireframe />
+        </WireframeSection>
+
+        <WireframeSection id="services" backgroundColor="bg-background" animation="fadeInRight" animationDelay={100}>
+          <ServicesWireframe />
+        </WireframeSection>
+
+        <WireframeSection id="transform" variant="gradient" animation="bounceIn" animationDelay={200}>
+          <TransformWireframe />
+        </WireframeSection>
+
+        <WireframeSection id="contact" backgroundColor="bg-background" animation="slideInBottom" animationDelay={150}>
+          <ContactWireframe />
+        </WireframeSection>
+      </main>
+    </div>
+  );
+}
 
 export default function App() {
-  const [language, setLanguage] = useState<'ar' | 'en'>('en');
-  const [darkMode, setDarkMode] = useState(false);
-  const [selectedTheme, setSelectedTheme] = useState('blue');
-
-  const themeColors = {
-    default: { primary: '#030213', name: language === 'ar' ? 'افتراضي' : 'Default' },
-    blue: { primary: '#2563eb', name: language === 'ar' ? 'أزرق' : 'Blue' },
-    emerald: { primary: '#059669', name: language === 'ar' ? 'زمردي' : 'Emerald' },
-    purple: { primary: '#7c3aed', name: language === 'ar' ? 'بنفسجي' : 'Purple' },
-    orange: { primary: '#ea580c', name: language === 'ar' ? 'برتقالي' : 'Orange' },
-    rose: { primary: '#e11d48', name: language === 'ar' ? 'وردي' : 'Rose' }
-  };
-
-  // Apply theme changes
-  React.useEffect(() => {
-    const root = document.documentElement;
-    if (darkMode) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    
-    const themeColor = themeColors[selectedTheme as keyof typeof themeColors];
-    root.style.setProperty('--primary', themeColor.primary);
-  }, [darkMode, selectedTheme, themeColors]);
-
-  const appProps = {
-    language,
-    setLanguage,
-    darkMode,
-    setDarkMode,
-    selectedTheme,
-    setSelectedTheme,
-    themeColors
-  };
-
-  const isArabic = language === 'ar';
-
   return (
-    <div className={`min-h-screen bg-background transition-colors duration-300 ${isArabic ? 'rtl' : 'ltr'}`} dir={isArabic ? 'rtl' : 'ltr'}>
-      <Header {...appProps} />
-      
-      <main>
-        <HeroSection {...appProps} />
-        <ProblemSection {...appProps} />
-        <StatisticsSection {...appProps} />
-        <ServicesSection {...appProps} />
-
-        <PricingSection {...appProps} />
-        <PortfolioSection {...appProps} />
-        <ContactSection {...appProps} />
-      </main>
-      
-      <FooterSection {...appProps} />
-      <ScrollButtons {...appProps} />
-    </div>
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }
