@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function ScrollProgress() {
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -20,20 +20,20 @@ export default function ScrollProgress() {
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-muted/30 backdrop-blur-sm">
+    <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-muted">
       <div 
-        className="h-full bg-gradient-to-r from-primary via-accent to-secondary transition-all duration-150 ease-out rounded-r-full"
+        className="h-full bg-primary transition-all duration-150 ease-out"
         style={{ 
           width: `${scrollProgress}%`,
-          boxShadow: scrollProgress > 0 ? '0 0 10px var(--primary)' : 'none'
+          boxShadow: scrollProgress > 0 ? '0 0 8px var(--primary)' : 'none'
         }}
       />
       
       {/* Animated pulse effect when scrolling */}
       {scrollProgress > 0 && scrollProgress < 100 && (
         <div 
-          className="absolute top-0 h-full w-8 bg-gradient-to-r from-transparent to-white/30 animate-pulse"
-          style={{ left: `${Math.max(0, scrollProgress - 8)}%` }}
+          className="absolute top-0 h-full w-6 bg-gradient-to-r from-transparent to-primary/50"
+          style={{ left: `${Math.max(0, scrollProgress - 6)}%` }}
         />
       )}
     </div>

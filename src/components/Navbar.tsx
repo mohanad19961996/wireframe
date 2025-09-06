@@ -1,6 +1,7 @@
+import React from "react";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
-import { ChevronDown, Moon, Sun, Globe, Palette, Menu } from "lucide-react";
+import { Moon, Sun, Globe, Palette, Menu } from "lucide-react";
 import { useLanguage } from "./LanguageContext";
 
 export default function Navbar() {
@@ -8,6 +9,7 @@ export default function Navbar() {
   const [currentTheme, setCurrentTheme] = useState("purple");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
   const { language, setLanguage, isRTL } = useLanguage();
 
   const themes = [
@@ -44,17 +46,44 @@ export default function Navbar() {
   ];
 
   const applyTheme = (theme: typeof themes[0]) => {
+    console.log('Applying theme:', theme.id);
     const root = document.documentElement;
-    
+
     // Check if dark mode is active
     const isDark = document.documentElement.classList.contains('dark');
-    
+    console.log('Dark mode active:', isDark);
+
+    // Remove ALL theme classes first
+    themes.forEach(t => {
+      root.classList.remove(`theme-${t.id}`);
+    });
+    console.log('All theme classes removed');
+
+    // Force a reflow to ensure DOM updates on mobile
+    root.offsetHeight; // Trigger reflow
+
+    // Add the current theme class
+    root.classList.add(`theme-${theme.id}`);
+    console.log('Added theme class:', `theme-${theme.id}`);
+
+    // Force another reflow and style recalculation
+    root.offsetHeight;
+    console.log('Final classes on root:', root.className);
+
+    // Force style recalculation on mobile devices
+    if ('ontouchstart' in window) {
+      setTimeout(() => {
+        window.getComputedStyle(root).getPropertyValue('--primary');
+        console.log('Mobile style recalculation completed');
+      }, 50);
+    }
+
     switch (theme.id) {
       case "ocean":
         if (isDark) {
           root.style.setProperty('--primary', '#0ea5e9');
-          root.style.setProperty('--accent', 'oklch(0.3 0.08 200)');
-          root.style.setProperty('--muted', 'oklch(0.25 0.05 200)');
+          root.style.setProperty('--accent', '#1e293b');
+          root.style.setProperty('--muted', '#0f172a');
         } else {
           root.style.setProperty('--primary', '#0284c7');
           root.style.setProperty('--accent', '#e0f2fe');
@@ -64,8 +93,8 @@ export default function Navbar() {
       case "forest":
         if (isDark) {
           root.style.setProperty('--primary', '#22c55e');
-          root.style.setProperty('--accent', 'oklch(0.3 0.08 140)');
-          root.style.setProperty('--muted', 'oklch(0.25 0.05 140)');
+          root.style.setProperty('--accent', '#14532d');
+          root.style.setProperty('--muted', '#0f172a');
         } else {
           root.style.setProperty('--primary', '#15803d');
           root.style.setProperty('--accent', '#dcfce7');
@@ -75,8 +104,8 @@ export default function Navbar() {
       case "sunset":
         if (isDark) {
           root.style.setProperty('--primary', '#f97316');
-          root.style.setProperty('--accent', 'oklch(0.3 0.08 25)');
-          root.style.setProperty('--muted', 'oklch(0.25 0.05 25)');
+          root.style.setProperty('--accent', '#451a03');
+          root.style.setProperty('--muted', '#0f172a');
         } else {
           root.style.setProperty('--primary', '#dc2626');
           root.style.setProperty('--accent', '#fef2f2');
@@ -86,8 +115,8 @@ export default function Navbar() {
       case "purple":
         if (isDark) {
           root.style.setProperty('--primary', '#a855f7');
-          root.style.setProperty('--accent', 'oklch(0.3 0.08 280)');
-          root.style.setProperty('--muted', 'oklch(0.25 0.05 280)');
+          root.style.setProperty('--accent', '#2e1065');
+          root.style.setProperty('--muted', '#0f172a');
         } else {
           root.style.setProperty('--primary', '#7c3aed');
           root.style.setProperty('--accent', '#faf5ff');
@@ -97,8 +126,8 @@ export default function Navbar() {
       case "rose":
         if (isDark) {
           root.style.setProperty('--primary', '#f43f5e');
-          root.style.setProperty('--accent', 'oklch(0.3 0.08 350)');
-          root.style.setProperty('--muted', 'oklch(0.25 0.05 350)');
+          root.style.setProperty('--accent', '#4c0519');
+          root.style.setProperty('--muted', '#0f172a');
         } else {
           root.style.setProperty('--primary', '#e11d48');
           root.style.setProperty('--accent', '#fff1f2');
@@ -108,8 +137,8 @@ export default function Navbar() {
       default:
         if (isDark) {
           root.style.setProperty('--primary', '#a855f7');
-          root.style.setProperty('--accent', 'oklch(0.3 0.08 280)');
-          root.style.setProperty('--muted', 'oklch(0.25 0.05 280)');
+          root.style.setProperty('--accent', '#2e1065');
+          root.style.setProperty('--muted', '#0f172a');
         } else {
           root.style.setProperty('--primary', '#030213');
           root.style.setProperty('--accent', '#e9ebef');
@@ -117,7 +146,10 @@ export default function Navbar() {
         }
         break;
     }
+
+    // Force a re-render by updating state
     setCurrentTheme(theme.id);
+    console.log('Theme applied successfully:', theme.id);
   };
 
   const toggleDarkMode = () => {
@@ -173,11 +205,21 @@ export default function Navbar() {
       }
     };
 
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isThemeDropdownOpen && !(event.target as Element).closest('.theme-dropdown')) {
+        setIsThemeDropdownOpen(false);
+      }
+    };
+
     window.addEventListener("scroll", handleScroll);
+    document.addEventListener("mousedown", handleClickOutside);
     handleScroll(); // Call once to set initial state
 
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isThemeDropdownOpen]);
 
   const navItems = [
     { 
@@ -203,27 +245,39 @@ export default function Navbar() {
     { 
       id: "contact", 
       label: language === 'ar' ? "تواصل معنا" : "Contact" 
-    },
+    }
   ];
 
   return (
     <nav className="fixed top-1 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-b border-border/50 shadow-sm">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center h-16">
-          {/* Logo */}
-          <div className="flex-shrink-0 cursor-pointer">
-            <div className="flex items-center space-x-2 group">
-              <div className="w-6 h-6 bg-gradient-to-br from-primary to-primary/70 rounded-md flex items-center justify-center transition-all duration-300 group-hover:scale-[1.2] group-hover:rotate-12 group-hover:shadow-lg">
-                <div className="w-2 h-2 bg-primary-foreground rounded-sm transition-all duration-300 group-hover:scale-125"></div>
+      <div className="max-w-7xl mx-auto px-2 sm:px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo - Fixed Left */}
+          <div className="-ml-2 flex-shrink-0 cursor-pointer">
+            <div className="flex items-center space-x-2 group hover:bg-primary/5 rounded-lg p-2 transition-all duration-300" style={{ marginRight: '30px' }}>
+              <div className="w-7 h-7 bg-gradient-to-br from-primary to-primary/70 rounded-lg flex items-center justify-center transition-all duration-500 ease-in-out animate-pulse-rotate shadow-lg">
+                <div className="w-2.5 h-2.5 bg-primary-foreground rounded-sm transition-all duration-300 group-hover:scale-125"></div>
               </div>
-              <span className="text-base font-medium text-foreground tracking-tight transition-all duration-300 group-hover:text-primary group-hover:scale-105">
-                Elegant
+              <span 
+                className=" animate-pulse-rotate  text-lg font-semibold text-primary tracking-tight transition-all duration-300  "
+                style={{
+                  transform: 'scale(1)',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.2) rotate(-8deg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                Future Web
               </span>
             </div>
           </div>
           
-          {/* Navigation Links - Desktop - Centered */}
-          <div className="flex-1 flex justify-center">
+          {/* Navigation Links - Always Centered */}
+          <div className="absolute left-1/2 transform -translate-x-1/2">
             <div className="hidden md:block">
               <div className="flex items-center space-x-1">
                 {navItems.map((item) => (
@@ -235,8 +289,8 @@ export default function Navbar() {
                       relative px-2.5 py-1.5 rounded-md transition-all duration-300 text-sm font-medium cursor-pointer
                       hover:bg-gradient-to-br hover:from-primary/10 hover:to-primary/5 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/10
                       ${activeSection === item.id 
-                        ? 'text-foreground bg-gradient-to-br from-primary/5 to-primary/10' 
-                        : 'text-muted-foreground hover:text-primary hover:scale-105'
+                        ? 'text-black dark:text-white bg-gradient-to-br from-primary/5 to-primary/10' 
+                        : 'text-black dark:text-white hover:text-primary hover:scale-105'
                       }
                     `}
                   >
@@ -271,48 +325,63 @@ export default function Navbar() {
             </div>
           </div>
           
-          {/* Right side buttons - Language, Theme and CTA */}
-          <div className={`flex items-center ${isRTL ? 'space-x-reverse space-x-1' : 'space-x-1'}`}>
-            {/* Language Toggle - Hidden only on smallest screens */}
-            <div className="hidden sm:block">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
-                className="flex items-center space-x-1.5 px-2 py-1 text-xs font-medium cursor-pointer hover:bg-primary/10 transition-all duration-300 hover:text-primary hover:shadow-sm group h-7 rounded-md border border-transparent hover:border-primary/20"
-              >
-                <Globe className="w-3 h-3 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12" />
-                <div className="flex items-center space-x-0.5">
-                  <span className={`transition-all duration-300 text-xs ${language === 'ar' ? 'text-primary font-semibold' : 'text-muted-foreground group-hover:text-foreground'}`}>
-                    ع
-                  </span>
-                  <span className="text-muted-foreground/40 text-xs">|</span>
-                  <span className={`transition-all duration-300 text-xs ${language === 'en' ? 'text-primary font-semibold' : 'text-muted-foreground group-hover:text-foreground'}`}>
-                    EN
-                  </span>
-                </div>
-              </Button>
-            </div>
+          {/* Right side buttons - Always Visible */}
+          <div className={`flex items-center ${isRTL ? 'space-x-reverse space-x-1' : 'space-x-1'} flex-shrink-0`}  >
+            {/* Language Toggle - Always Visible */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
+              className="flex items-center space-x-1.5 px-2 py-1 text-xs font-medium cursor-pointer hover:bg-primary/10 transition-all duration-300 hover:text-primary hover:shadow-sm group h-7 rounded-md border border-transparent hover:border-primary/20"
+            >
+              <Globe className="w-3 h-3 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12" />
+              <div className="hidden xs:flex items-center space-x-0.5">
+                <span className={`transition-all duration-300 text-xs ${language === 'ar' ? 'text-primary font-semibold' : 'text-muted-foreground group-hover:text-foreground'}`}>
+                  ع
+                </span>
+                <span className="text-muted-foreground/40 text-xs">|</span>
+                <span className={`transition-all duration-300 text-xs ${language === 'en' ? 'text-primary font-semibold' : 'text-muted-foreground group-hover:text-foreground'}`}>
+                  EN
+                </span>
+              </div>
+            </Button>
 
-            {/* Theme Selector - Hidden only on smallest screens */}
-            <div className="hidden sm:block relative">
+            {/* Theme Selector - Always Visible */}
+            <div className="relative">
               <div className="group">
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
                   className="flex items-center space-x-1.5 px-2 py-1 text-xs font-medium cursor-pointer hover:bg-primary/10 transition-all duration-300 hover:text-primary hover:shadow-sm h-7 rounded-md border border-transparent hover:border-primary/20"
                 >
                   <Palette className="w-3 h-3 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12" />
-                  <span className="text-xs">{language === 'ar' ? 'المظهر' : 'Theme'}</span>
+                  <span className="hidden xs:inline text-xs">{language === 'ar' ? 'المظهر' : 'Theme'}</span>
                 </Button>
                 
                 {/* Theme Dropdown */}
-                <div className={`absolute top-full ${isRTL ? 'left-0' : 'right-0'} mt-2 w-48 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-50`}>
+                <div className={`theme-dropdown absolute top-full ${isRTL ? 'left-0' : 'right-0'} mt-2 w-48 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg transition-all duration-300 z-50 ${
+                  isThemeDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+                } group-hover:opacity-100 group-hover:visible`}>
                   <div className="p-3 space-y-2">
                     {themes.map((theme) => (
                       <button
                         key={theme.id}
-                        onClick={() => applyTheme(theme)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('Theme button clicked on mobile:', theme.id);
+                          console.log('Event type:', e.type);
+                          console.log('Touch event?', 'touches' in e);
+                          applyTheme(theme);
+                          setIsThemeDropdownOpen(false);
+                        }}
+                        onTouchStart={(e) => {
+                          e.preventDefault();
+                          console.log('Touch start on theme:', theme.id);
+                          applyTheme(theme);
+                          setIsThemeDropdownOpen(false);
+                        }}
                         className={`
                           w-full flex items-center justify-between p-2 rounded-md transition-all duration-300 cursor-pointer
                           hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:scale-102 hover:shadow-sm hover:shadow-primary/5
@@ -345,24 +414,20 @@ export default function Navbar() {
               </div>
             </div>
 
-            {/* Dark Mode Toggle - Hidden only on smallest screens */}
-            <div className="hidden sm:block">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleDarkMode}
-                className="p-1.5 cursor-pointer hover:bg-primary/10 transition-all duration-300 hover:shadow-sm hover:scale-105 hover:text-primary h-7 w-7 rounded-md border border-transparent hover:border-primary/20 group"
-              >
-                <div className="relative w-3 h-3">
-                  <Sun className={`absolute inset-0 w-3 h-3 transition-all duration-500 group-hover:rotate-12 ${isDarkMode ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'}`} />
-                  <Moon className={`absolute inset-0 w-3 h-3 transition-all duration-500 group-hover:-rotate-12 ${isDarkMode ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'}`} />
-                </div>
-              </Button>
-            </div>
-
-
+            {/* Dark Mode Toggle - Always Visible */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleDarkMode}
+              className="p-1.5 cursor-pointer hover:bg-primary/10 transition-all duration-300 hover:shadow-sm hover:scale-105 hover:text-primary h-7 w-7 rounded-md border border-transparent hover:border-primary/20 group"
+            >
+              <div className="relative w-3 h-3">
+                <Sun className={`absolute inset-0 w-3 h-3 transition-all duration-500 group-hover:rotate-12 ${isDarkMode ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'}`} />
+                <Moon className={`absolute inset-0 w-3 h-3 transition-all duration-500 group-hover:-rotate-12 ${isDarkMode ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'}`} />
+              </div>
+            </Button>
             
-            {/* Mobile menu button */}
+            {/* Mobile menu button - Only for navigation links */}
             <div className="md:hidden">
               <Button 
                 variant="ghost" 
@@ -377,7 +442,7 @@ export default function Navbar() {
         </div>
       </div>
       
-      {/* Mobile Navigation Menu */}
+      {/* Mobile Navigation Menu - Only for navigation links */}
       <div className={`md:hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden bg-background/95 backdrop-blur-md border-b border-border/50`}>
         <div className="px-4 py-4 space-y-2">
           {navItems.map((item) => (
@@ -397,45 +462,6 @@ export default function Navbar() {
               {item.label}
             </a>
           ))}
-          
-          {/* Mobile-only buttons for very small screens */}
-          <div className="sm:hidden pt-3 border-t border-border/20 space-y-2">
-            <div className={`flex items-center ${isRTL ? 'space-x-reverse space-x-1.5' : 'space-x-1.5'}`}>
-              {/* Mobile Language Toggle */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
-                className="flex-1 flex items-center justify-center space-x-1.5 p-2 cursor-pointer hover:bg-primary/10 transition-all duration-300 hover:shadow-sm h-8 rounded-md border border-transparent hover:border-primary/20 group"
-              >
-                <Globe className="w-3 h-3 transition-all duration-300 group-hover:scale-110" />
-                <div className="flex items-center space-x-0.5">
-                  <span className={`transition-all duration-300 text-xs ${language === 'ar' ? 'text-primary font-semibold' : 'text-muted-foreground group-hover:text-foreground'}`}>
-                    ع
-                  </span>
-                  <span className="text-muted-foreground/40 text-xs">|</span>
-                  <span className={`transition-all duration-300 text-xs ${language === 'en' ? 'text-primary font-semibold' : 'text-muted-foreground group-hover:text-foreground'}`}>
-                    EN
-                  </span>
-                </div>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleDarkMode}
-                className="flex-1 flex items-center justify-center space-x-1.5 p-2 cursor-pointer hover:bg-primary/10 transition-all duration-300 hover:shadow-sm h-8 rounded-md border border-transparent hover:border-primary/20 group"
-              >
-                <div className="relative w-3 h-3">
-                  <Sun className={`absolute inset-0 w-3 h-3 transition-all duration-500 group-hover:rotate-12 ${isDarkMode ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'}`} />
-                  <Moon className={`absolute inset-0 w-3 h-3 transition-all duration-500 group-hover:-rotate-12 ${isDarkMode ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'}`} />
-                </div>
-                <span className="text-xs font-medium">
-                  {language === 'ar' ? (isDarkMode ? 'فاتح' : 'داكن') : (isDarkMode ? 'Light' : 'Dark')}
-                </span>
-              </Button>
-            </div>
-
-          </div>
         </div>
       </div>
     </nav>
